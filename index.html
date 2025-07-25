@@ -920,6 +920,42 @@
             }, 3000);
         }
 
+        // ひらがな・カタカナをローマ字に変換する関数
+        function convertToRomaji(text) {
+            const hiraganaMap = {
+                'あ': 'a', 'い': 'i', 'う': 'u', 'え': 'e', 'お': 'o',
+                'か': 'ka', 'き': 'ki', 'く': 'ku', 'け': 'ke', 'こ': 'ko',
+                'が': 'ga', 'ぎ': 'gi', 'ぐ': 'gu', 'げ': 'ge', 'ご': 'go',
+                'さ': 'sa', 'し': 'shi', 'す': 'su', 'せ': 'se', 'そ': 'so',
+                'ざ': 'za', 'じ': 'ji', 'ず': 'zu', 'ぜ': 'ze', 'ぞ': 'zo',
+                'た': 'ta', 'ち': 'chi', 'つ': 'tsu', 'て': 'te', 'と': 'to',
+                'だ': 'da', 'ぢ': 'di', 'づ': 'du', 'で': 'de', 'ど': 'do',
+                'な': 'na', 'に': 'ni', 'ぬ': 'nu', 'ね': 'ne', 'の': 'no',
+                'は': 'ha', 'ひ': 'hi', 'ふ': 'fu', 'へ': 'he', 'ほ': 'ho',
+                'ば': 'ba', 'び': 'bi', 'ぶ': 'bu', 'べ': 'be', 'ぼ': 'bo',
+                'ぱ': 'pa', 'ぴ': 'pi', 'ぷ': 'pu', 'ぺ': 'pe', 'ぽ': 'po',
+                'ま': 'ma', 'み': 'mi', 'む': 'mu', 'め': 'me', 'も': 'mo',
+                'や': 'ya', 'ゆ': 'yu', 'よ': 'yo',
+                'ら': 'ra', 'り': 'ri', 'る': 'ru', 'れ': 're', 'ろ': 'ro',
+                'わ': 'wa', 'ん': 'n',
+                'っ': ''
+            };
+            
+            let result = '';
+            for (let char of text) {
+                if (hiraganaMap[char]) {
+                    result += hiraganaMap[char];
+                } else if (char >= 'ア' && char <= 'ヶ') {
+                    // カタカナをひらがなに変換してからローマ字化
+                    const hiragana = String.fromCharCode(char.charCodeAt(0) - 0x60);
+                    result += hiraganaMap[hiragana] || char;
+                } else {
+                    result += char;
+                }
+            }
+            return result;
+        }
+
         // Buil語翻訳システムクラス（JavaScriptバージョン）
         class BuilTranslator {
             constructor() {
@@ -965,9 +1001,28 @@
                 }
             }
 
+            isJapaneseName(word) {
+                // ひらがな・カタカナのみで構成されている場合は人名候補とする
+                const hiraganaPattern = /^[ひらがな]+$/;
+                const katakanaPattern = /^[カタカナ]+$/;
+                const hiraganaRange = /^[あ-ん]+$/;
+                const katakanaRange = /^[ア-ン]+$/;
+                
+                return hiraganaRange.test(word) || katakanaRange.test(word);
+            }
+
             translateWord(word, direction = "jp_to_buil") {
                 if (direction === "jp_to_buil") {
-                    return this.jpToBuil[word] || `[${word}:未登録]`;
+                    if (this.jpToBuil[word]) {
+                        return this.jpToBuil[word];
+                    }
+                    
+                    // 辞書にない場合、ひらがな・カタカナかチェックして人名として処理
+                    if (this.isJapaneseName(word)) {
+                        return convertToRomaji(word);
+                    }
+                    
+                    return `[${word}:未登録]`;
                 } else {
                     // Buil語→日本語の場合、大文字小文字を区別しない検索
                     if (word in this.builToJp) {
@@ -1001,10 +1056,9 @@
                 while (i < sentence.length) {
                     let found = false;
                     
-                    // 長い単語から順に探す（貪欲法）
+                    // 最初に辞書の単語を探す（長い順で貪欲法）
                     for (let length = Math.min(10, sentence.length - i); length > 0; length--) {
                         const substring = sentence.substring(i, i + length);
-                        
                         if (substring in this.jpToBuil) {
                             words.push(substring);
                             i += length;
@@ -1013,10 +1067,47 @@
                         }
                     }
                     
-                    // 辞書にない場合は1文字ずつ処理
+                    // 辞書にない場合のみ人名候補をチェック
                     if (!found) {
-                        words.push(sentence[i]);
-                        i += 1;
+                        // ひらがな・カタカナかチェック
+                        if (/[あ-んア-ン]/.test(sentence[i])) {
+                            // ひらがな・カタカナが続く限り取得
+                            let nameEnd = i;
+                            for (let k = i; k < sentence.length; k++) {
+                                if (!/[あ-んア-ン]/.test(sentence[k])) {
+                                    break;
+                                }
+                                nameEnd = k + 1;
+                            }
+                            
+                            const possibleName = sentence.substring(i, nameEnd);
+                            
+                            // 後続に辞書単語があるかチェック
+                            if (nameEnd < sentence.length) {
+                                for (let checkLen = 1; checkLen <= Math.min(10, sentence.length - nameEnd); checkLen++) {
+                                    const followingWord = sentence.substring(nameEnd, nameEnd + checkLen);
+                                    if (followingWord in this.jpToBuil) {
+                                        // 人名として確定（辞書単語が後続にある場合）
+                                        words.push(possibleName);
+                                        i = nameEnd;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // 後続に辞書単語がない場合は1文字処理
+                            if (!found) {
+                                words.push(sentence[i]);
+                                i += 1;
+                                found = true;
+                            }
+                        } else {
+                            // ひらがな・カタカナでない場合は1文字処理
+                            words.push(sentence[i]);
+                            i += 1;
+                            found = true;
+                        }
                     }
                 }
                 
