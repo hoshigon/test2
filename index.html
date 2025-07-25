@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buil語翻訳システム - Web版</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* レスポンシブデザイン - ウィンドウサイズに応じて動的調整 */
+        
+        /* 大画面 (1200px以上) */
+        @media (min-width: 1200px) {
+            body {
+                padding: 20px;
+            }
+            .main-content {
+                padding: 40px;
+            }
+        }
+        
+        /* 中間画面 - タブレット (769px - 1199px) */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            body {
+                padding: 15px;
+            }
+            .main-content {
+                padding: 25px;
+            }
+            .header h1 {
+                font-size: 2.2em;
+            }
+        }
+        
+        /* 小画面 - スマホ (480px - 768px) */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .main-content {
+                padding: 20px;
+            }
+        }
+        
+        /* 極小画面 - 小型スマホ (480px以下) */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            .main-content {
+                padding: 12px;
+            }
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        /* ヘッダーのレスポンシブ調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .header {
+                padding: 25px;
+            }
+            .header h1 {
+                font-size: 2.2em;
+            }
+            .header p {
+                font-size: 1.1em;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .header {
+                padding: 22px 18px;
+            }
+            .header h1 {
+                font-size: 2.1em;
+            }
+            .header p {
+                font-size: 1.05em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 18px 12px;
+            }
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .header p {
+                font-size: 0.95em;
+            }
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+            white-space: nowrap;
+            min-width: auto;
+        }
+
+        /* タブのレスポンシブ調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .tab {
+                padding: 14px 12px;
+                font-size: 15px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .tab-container {
+                margin-bottom: 25px;
+                gap: 3px;
+            }
+            .tab {
+                padding: 13px 10px;
+                font-size: 14px;
+                margin-right: 3px;
+                flex-shrink: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .tab-container {
+                margin-bottom: 15px;
+                gap: 2px;
+            }
+            .tab {
+                padding: 10px 6px;
+                font-size: 12px;
+                margin-right: 2px;
+                flex-shrink: 0;
+            }
+        }
+
+        .tab:last-child {
+            margin-right: 0;
+        }
+
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .translation-area {
+            display: grid;
+            grid-template-columns: 1fr 80px 1fr;
+            gap: 20px;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+
+        /* 翻訳エリアのレスポンシブ調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .translation-area {
+                gap: 18px;
+            }
+            .translate-btn {
+                width: 65px;
+                height: 65px;
+                font-size: 22px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .translation-area {
+                grid-template-columns: 1fr;
+                gap: 18px;
+                text-align: center;
+            }
+            .translate-btn {
+                width: 55px;
+                height: 55px;
+                font-size: 21px;
+                margin: 0 auto;
+                justify-self: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .translation-area {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                text-align: center;
+            }
+            .translate-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+                margin: 0 auto;
+                justify-self: center;
+            }
+        }
+
+        .input-section, .output-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .input-section h3, .output-section h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 16px;
+            resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        /* 入力エリアのレスポンシブ調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .input-section, .output-section {
+                padding: 18px;
+            }
+            textarea {
+                min-height: 110px;
+                padding: 14px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .input-section, .output-section {
+                padding: 16px;
+            }
+            textarea {
+                min-height: 105px;
+                font-size: 16px; /* iOS Safari用にズーム防止 */
+                padding: 13px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .input-section, .output-section {
+                padding: 12px;
+            }
+            textarea {
+                min-height: 90px;
+                font-size: 16px; /* iOS Safari用にズーム防止 */
+                padding: 10px;
+            }
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .translate-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: center;
+            margin-top: 40px;
+        }
+
+        .translate-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.4);
+        }
+
+        .translate-btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin: 5px;
+            min-height: 44px; /* タッチデバイス推奨サイズ */
+        }
+
+        /* ボタンのレスポンシブ調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .btn {
+                padding: 13px 22px;
+                font-size: 15px;
+                margin: 4px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .btn {
+                padding: 13px 18px;
+                font-size: 15px;
+                margin: 4px;
+                min-width: 110px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .btn {
+                padding: 12px 16px;
+                font-size: 14px;
+                margin: 2px;
+                min-width: 100px;
+            }
+        }
+
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            min-height: 44px;
+            box-sizing: border-box;
+        }
+
+        /* フォームのレスポンシブ調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .form-group input, .form-group select {
+                padding: 13px;
+                font-size: 15px;
+            }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            .form-group input, .form-group select {
+                font-size: 16px; /* iOS Safari用にズーム防止 */
+                padding: 13px 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .form-group input, .form-group select {
+                font-size: 16px; /* iOS Safari用にズーム防止 */
+                padding: 12px 10px;
+            }
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+
+        .vocabulary-display {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .vocabulary-category {
+            margin-bottom: 20px;
+        }
+
+        .vocabulary-category h4 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .word-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .word-entry:last-child {
+            border-bottom: none;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .direction-badge {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+
+        .search-results {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        /* 全体レイアウトのレスポンシブ調整 */
+        
+        /* タブレット用調整 */
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .words-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 25px !important;
+            }
+            .vocabulary-display, .search-results {
+                max-height: 350px;
+            }
+            .history-item {
+                padding: 14px;
+                font-size: 15px;
+            }
+            .footer {
+                padding: 18px;
+                font-size: 13px;
+            }
+        }
+        
+        /* 中型スマホ用調整 */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .words-grid {
+                grid-template-columns: 1fr !important;
+                gap: 18px !important;
+            }
+            .vocabulary-display, .search-results {
+                max-height: 280px;
+            }
+            .history-item {
+                padding: 13px;
+                font-size: 14px;
+            }
+            .footer {
+                padding: 16px;
+                font-size: 13px;
+            }
+        }
+        
+        /* 小型スマホ用調整 */
+        @media (max-width: 480px) {
+            .words-grid {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+            .vocabulary-display, .search-results {
+                max-height: 220px;
+            }
+            .history-item {
+                padding: 10px;
+                font-size: 13px;
+            }
+            .footer {
+                padding: 12px;
+                font-size: 11px;
+            }
+        }
+        
+        /* タッチデバイス共通調整 */
+        @media (max-width: 1199px) {
+            .tab, .btn, input, select, textarea {
+                -webkit-appearance: none;
+                appearance: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            /* スクロールバーを細く */
+            .tab-container::-webkit-scrollbar {
+                height: 3px;
+            }
+            
+            .tab-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            
+            .tab-container::-webkit-scrollbar-thumb {
+                background: #007bff;
+                border-radius: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Buil語翻訳システム</h1>
+            <p>buil Übersetz System - Web版だ！</p>
+        </div>
+
+        <div class="main-content">
+            <div class="tab-container">
+                <button class="tab active" onclick="showTab('translate')">翻訳</button>
+                <button class="tab" onclick="showTab('natural')">自然翻訳 おすすめ</button>
+                <button class="tab" onclick="showTab('words')">単語管理</button>
+                <button class="tab" onclick="showTab('search')">検索</button>
+                <button class="tab" onclick="showTab('history')">履歴</button>
+                <button class="tab" onclick="showTab('info')">システム情報</button>
+            </div>
+
+            <!-- 翻訳タブ -->
+            <div id="translate" class="tab-content active">
+                <h2>スペース区切り翻訳</h2>
+                <div class="translation-area">
+                    <div class="input-section">
+                        <h3>入力</h3>
+                        <textarea id="translateInput" placeholder="翻訳したい文章を入力してくれ..."></textarea>
+                        <div style="margin-top: 10px;">
+                            <label>
+                                <input type="radio" name="translateDirection" value="jp_to_buil" checked> 日本語 → Buil語
+                            </label>
+                            <label style="margin-left: 20px;">
+                                <input type="radio" name="translateDirection" value="buil_to_jp"> Buil語 → 日本語
+                            </label>
+                        </div>
+                    </div>
+                    <button class="translate-btn" onclick="translateText()">→</button>
+                    <div class="output-section">
+                        <h3>結果</h3>
+                        <textarea id="translateOutput" readonly placeholder="翻訳結果がここに表示されるぞ..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自然翻訳タブ -->
+            <div id="natural" class="tab-content">
+                <h2>自然な翻訳 おすすめだ！</h2>
+                <div class="translation-area">
+                    <div class="input-section">
+                        <h3>入力</h3>
+                        <textarea id="naturalInput" placeholder="自然な文章を入力してくれ..."></textarea>
+                        <div style="margin-top: 10px;">
+                            <label>
+                                <input type="radio" name="naturalDirection" value="jp_to_buil" checked> 日本語 → Buil語
+                            </label>
+                            <label style="margin-left: 20px;">
+                                <input type="radio" name="naturalDirection" value="buil_to_jp"> Buil語 → 日本語
+                            </label>
+                        </div>
+                        <div id="parseResult" style="margin-top: 10px; font-size: 14px; color: #666;"></div>
+                    </div>
+                    <button class="translate-btn" onclick="translateNatural()">→</button>
+                    <div class="output-section">
+                        <h3>結果</h3>
+                        <textarea id="naturalOutput" readonly placeholder="自然な翻訳結果がここに表示されるぞ..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 単語管理タブ -->
+            <div id="words" class="tab-content">
+                <h2>単語管理</h2>
+                
+                <div class="words-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h3>新しい単語を追加</h3>
+                        <div class="form-group">
+                            <label>日本語</label>
+                            <input type="text" id="newWordJp" placeholder="日本語を入力してくれ">
+                        </div>
+                        <div class="form-group">
+                            <label>Buil語</label>
+                            <input type="text" id="newWordBuil" placeholder="Buil語を入力してくれ">
+                        </div>
+                        <div class="form-group">
+                            <label>カテゴリ</label>
+                            <select id="newWordCategory">
+                                <option value="pronouns">人称代名詞</option>
+                                <option value="particles">助詞</option>
+                                <option value="conjunction_particles">接続助詞</option>
+                                <option value="nouns">名詞</option>
+                                <option value="adjectives">形容詞</option>
+                                <option value="verbs">動詞</option>
+                                <option value="sentence_endings">文末表現</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-success" onclick="addNewWord()">単語を追加</button>
+                    </div>
+
+                    <div>
+                        <h3>語彙一覧</h3>
+                        <div style="margin-bottom: 15px;">
+                            <button class="btn btn-info" onclick="showVocabulary()">語彙を表示</button>
+                            <button class="btn" onclick="downloadVocabulary()">辞書をダウンロード</button>
+                        </div>
+                        <div id="vocabularyDisplay" class="vocabulary-display"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h3>語彙ファイル読み込み（オプション）</h3>
+                    <button class="btn" onclick="loadDefaultVocabulary()">デフォルト語彙をリロード</button>
+                    <input type="file" id="vocabularyFile" accept=".json" onchange="loadVocabularyFile(event)" style="margin-top: 10px;">
+                    <p style="font-size: 14px; color: #666;">
+                        デフォルト語彙は自動読み込み済みだ！追加の語彙ファイルがあれば読み込めるぞ
+                    </p>
+                </div>
+            </div>
+
+            <!-- 検索タブ -->
+            <div id="search" class="tab-content">
+                <h2>語彙検索</h2>
+                <div class="form-group">
+                    <label>検索語</label>
+                    <input type="text" id="searchInput" placeholder="検索したい単語を入力してくれ" onkeypress="if(event.key==='Enter') searchVocabulary()">
+                </div>
+                <button class="btn btn-info" onclick="searchVocabulary()">検索</button>
+                <div id="searchResults" class="search-results" style="display: none;"></div>
+            </div>
+
+            <!-- 履歴タブ -->
+            <div id="history" class="tab-content">
+                <h2>翻訳履歴</h2>
+                <button class="btn btn-info" onclick="showHistory()">履歴を表示</button>
+                <button class="btn" onclick="clearHistory()">履歴をクリア</button>
+                <div id="historyDisplay" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- システム情報タブ -->
+            <div id="info" class="tab-content">
+                <h2>Buil語翻訳システムについて</h2>
+                <div style="background: #f8f9fa; border-radius: 10px; padding: 20px;">
+                    <p><strong>このシステムは造言語「Buil語」と日本語を相互翻訳するぞ</strong></p>
+                    
+                    <h3>【Buil語とは】</h3>
+                    <ul>
+                        <li>ドイツ語の文字体系と日本語の文法を組み合わせた造言語だ</li>
+                        <li>イメージカラー: Föniksflam（フェニクスフラム - 鳳凰の炎）</li>
+                        <li>敬体（Sein）と対話体（ja）の区別があるぞ</li>
+                    </ul>
+
+                    <h3>【翻訳機能】</h3>
+                    <ul>
+                        <li>スペース区切り翻訳（翻訳タブ）</li>
+                        <li>自然な文章翻訳（自然翻訳タブ）- おすすめだ！</li>
+                        <li>語彙検索・履歴機能も付いてるぞ</li>
+                    </ul>
+
+                    <h3>【現在の語彙数】</h3>
+                    <p id="vocabCount">語彙ファイルを読み込んでくれ</p>
+
+                    <h3>【使い方のコツ】</h3>
+                    <ul>
+                        <li>初めてなら「自然翻訳」タブを試してみてくれ</li>
+                        <li>「検索」タブで単語を検索、「履歴」タブで履歴確認ができるぞ</li>
+                        <li>新しい語彙は「単語管理」タブで追加できるからな</li>
+                    </ul>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #dee2e6;">
+                        <p><strong>開発者:</strong> ほしごん & Gemini & Claude</p>
+                        <p><strong>バージョン:</strong> Web版 1.0だ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Buil語翻訳システム Web版 - buil Übersetz System</p>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let translator = null;
+        let currentTab = 'translate';
+
+        // 正しいBuil語データ（JavaScript内に埋め込み）
+        const defaultVocabularyData = {
+            "info": {
+                "language": "Buil語（ビル語）",
+                "version": "1.0",
+                "description": "ドイツ語の文字体系と日本語の文法を組み合わせた造言語",
+                "image_color": "Föniksflam（フェニクスフラム - 鳳凰の炎）",
+                "total_words": 21
+            },
+            "pronouns": {
+                "私": "Fi",
+                "あなた": "Sol",
+                "彼": "Vek",
+                "彼女": "Vek",
+                "私達": "Fien",
+                "あなた達": "Solien",
+                "彼ら": "Vekien",
+                "彼女たち": "Vekien"
+            },
+            "particles": {
+                "は": "ra",
+                "が": "ga",
+                "を": "zil",
+                "の": "vo",
+                "に": "di",
+                "へ": "te"
+            },
+            "conjunction_particles": {
+                "して": "ren"
+            },
+            "nouns": {
+                "名前": "Rüf",
+                "言語": "buil",
+                "Buil語": "buil"
+            },
+            "adjectives": {
+                "心地よい": "Sätyräji"
+            },
+            "verbs": {
+                "する": "wenk",
+                "した": "wenkt",
+                "しない": "wenknix",
+                "します": "wenken"
+            },
+            "sentence_endings": {
+                "である": "Sein",
+                "だよ": "ja",
+                "です": "Sein"
+            }
+        };
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            translator = new BuilTranslator();
+            // デフォルト語彙データを自動読み込み
+            if (translator.loadVocabulary(defaultVocabularyData)) {
+                showStatusMessage('デフォルト語彙データを読み込んだぞ！翻訳を始められるからな', 'success');
+            } else {
+                showStatusMessage('語彙データの読み込みに失敗したみたいだ', 'warning');
+            }
+        });
+
+        // タブ切り替え
+        function showTab(tabName) {
+            // すべてのタブとコンテンツを非アクティブに
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 選択されたタブとコンテンツをアクティブに
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            currentTab = tabName;
+        }
+
+        // ステータスメッセージ表示
+        function showStatusMessage(message, type = 'info') {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            // 現在のタブに挿入
+            const currentTabContent = document.getElementById(currentTab);
+            currentTabContent.insertBefore(statusDiv, currentTabContent.firstChild);
+            
+            // 3秒後に削除
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 3000);
+        }
+
+        // Buil語翻訳システムクラス（JavaScriptバージョン）
+        class BuilTranslator {
+            constructor() {
+                this.vocabularyData = {};
+                this.jpToBuil = {};
+                this.builToJp = {};
+                this.translationHistory = [];
+                this.newlyAddedWords = [];
+            }
+
+            loadVocabulary(data) {
+                try {
+                    this.vocabularyData = data;
+                    this.jpToBuil = {};
+                    
+                    // 各カテゴリの辞書を統合
+                    for (const [category, words] of Object.entries(this.vocabularyData)) {
+                        if (category !== "info") {
+                            Object.assign(this.jpToBuil, words);
+                        }
+                    }
+                    
+                    // 逆引き辞書を作成
+                    this.builToJp = {};
+                    for (const [jp, buil] of Object.entries(this.jpToBuil)) {
+                        this.builToJp[buil] = jp;
+                    }
+                    
+                    console.log(`語彙データを読み込んだぞ: ${Object.keys(this.jpToBuil).length}語`);
+                    this.updateVocabCount();
+                    return true;
+                } catch (error) {
+                    console.error('語彙データの読み込みでエラーが発生したぞ:', error);
+                    return false;
+                }
+            }
+
+            updateVocabCount() {
+                const countElement = document.getElementById('vocabCount');
+                if (countElement) {
+                    const totalWords = Object.keys(this.jpToBuil).length;
+                    countElement.textContent = `登録語彙: ${totalWords}語`;
+                }
+            }
+
+            translateWord(word, direction = "jp_to_buil") {
+                if (direction === "jp_to_buil") {
+                    return this.jpToBuil[word] || `[${word}:未登録]`;
+                } else {
+                    // Buil語→日本語の場合、大文字小文字を区別しない検索
+                    if (word in this.builToJp) {
+                        return this.builToJp[word];
+                    }
+                    
+                    const wordLower = word.toLowerCase();
+                    for (const [builWord, jpWord] of Object.entries(this.builToJp)) {
+                        if (wordLower === builWord.toLowerCase()) {
+                            return jpWord;
+                        }
+                    }
+                    
+                    return `[${word}:未登録]`;
+                }
+            }
+
+            translateSentence(sentence, direction = "jp_to_buil") {
+                const words = sentence.split(/\s+/);
+                const translatedWords = words.map(word => this.translateWord(word, direction));
+                const result = translatedWords.join(" ");
+                
+                this.addToHistory(sentence, result, direction);
+                return result;
+            }
+
+            parseJapaneseSentence(sentence) {
+                const words = [];
+                let i = 0;
+                
+                while (i < sentence.length) {
+                    let found = false;
+                    
+                    // 長い単語から順に探す（貪欲法）
+                    for (let length = Math.min(10, sentence.length - i); length > 0; length--) {
+                        const substring = sentence.substring(i, i + length);
+                        
+                        if (substring in this.jpToBuil) {
+                            words.push(substring);
+                            i += length;
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    // 辞書にない場合は1文字ずつ処理
+                    if (!found) {
+                        words.push(sentence[i]);
+                        i += 1;
+                    }
+                }
+                
+                return words;
+            }
+
+            translateSentenceNatural(sentence, direction = "jp_to_buil") {
+                let result;
+                let parseInfo = "";
+                
+                if (direction === "jp_to_buil") {
+                    const words = this.parseJapaneseSentence(sentence);
+                    parseInfo = `分割結果: ${words.join(' | ')}`;
+                    
+                    const translatedWords = words.map(word => this.translateWord(word, direction));
+                    result = translatedWords.join(" ");
+                } else {
+                    const words = sentence.split(/\s+/);
+                    const translatedWords = words.map(word => this.translateWord(word, direction));
+                    result = translatedWords.join("");
+                }
+                
+                this.addToHistory(sentence, result, direction);
+                return { result, parseInfo };
+            }
+
+            addWord(japanese, buil, category) {
+                if (!(category in this.vocabularyData)) {
+                    this.vocabularyData[category] = {};
+                }
+                
+                this.vocabularyData[category][japanese] = buil;
+                this.jpToBuil[japanese] = buil;
+                this.builToJp[buil] = japanese;
+                
+                this.newlyAddedWords.push({
+                    japanese: japanese,
+                    buil: buil,
+                    category: category
+                });
+                
+                this.updateVocabCount();
+                console.log(`単語を追加したぞ: ${japanese} → ${buil} (${category})`);
+            }
+
+            searchVocabulary(searchTerm) {
+                const results = [];
+                const partialMatches = [];
+                const searchLower = searchTerm.toLowerCase();
+                
+                // 完全一致検索
+                if (searchTerm in this.jpToBuil) {
+                    results.push(`日本語「${searchTerm}」→ Buil語「${this.jpToBuil[searchTerm]}」`);
+                }
+                
+                for (const [builWord, jpWord] of Object.entries(this.builToJp)) {
+                    if (searchTerm.toLowerCase() === builWord.toLowerCase()) {
+                        const resultText = `Buil語「${builWord}」→ 日本語「${jpWord}」`;
+                        if (!results.includes(resultText)) {
+                            results.push(resultText);
+                        }
+                    }
+                }
+                
+                // 部分一致検索
+                for (const [jp, buil] of Object.entries(this.jpToBuil)) {
+                    if (jp.includes(searchTerm)) {
+                        const matchText = `日本語「${jp}」→ Buil語「${buil}」`;
+                        if (!results.includes(matchText) && !partialMatches.includes(matchText)) {
+                            partialMatches.push(matchText);
+                        }
+                    } else if (buil.toLowerCase().includes(searchLower)) {
+                        const matchText = `日本語「${jp}」→ Buil語「${buil}」`;
+                        if (!results.includes(matchText) && !partialMatches.includes(matchText)) {
+                            partialMatches.push(matchText);
+                        }
+                    }
+                }
+                
+                return { exact: results, partial: partialMatches.slice(0, 10) };
+            }
+
+            addToHistory(inputText, outputText, direction) {
+                const record = {
+                    input: inputText,
+                    output: outputText,
+                    direction: direction,
+                    timestamp: new Date().toLocaleString()
+                };
+                this.translationHistory.push(record);
+                
+                // 履歴が50件を超えたら古いものを削除
+                if (this.translationHistory.length > 50) {
+                    this.translationHistory = this.translationHistory.slice(-50);
+                }
+            }
+
+            getVocabularyByCategory() {
+                const categoryNames = {
+                    "pronouns": "人称代名詞",
+                    "particles": "助詞",
+                    "conjunction_particles": "接続助詞",
+                    "nouns": "名詞",
+                    "adjectives": "形容詞",
+                    "verbs": "動詞",
+                    "sentence_endings": "文末表現"
+                };
+                
+                const categorized = {};
+                for (const [category, words] of Object.entries(this.vocabularyData)) {
+                    if (category !== "info") {
+                        categorized[categoryNames[category] || category] = words;
+                    }
+                }
+                
+                return categorized;
+            }
+        }
+
+        // UI関数群
+        function translateText() {
+            if (!translator || Object.keys(translator.jpToBuil).length === 0) {
+                showStatusMessage('語彙データを読み込んでくれ', 'warning');
+                return;
+            }
+            
+            const input = document.getElementById('translateInput').value.trim();
+            if (!input) {
+                showStatusMessage('翻訳する文章を入力してくれ', 'warning');
+                return;
+            }
+            
+            const direction = document.querySelector('input[name="translateDirection"]:checked').value;
+            const result = translator.translateSentence(input, direction);
+            document.getElementById('translateOutput').value = result;
+            
+            showStatusMessage('翻訳完了だ！', 'success');
+        }
+
+        function translateNatural() {
+            if (!translator || Object.keys(translator.jpToBuil).length === 0) {
+                showStatusMessage('語彙データを読み込んでくれ', 'warning');
+                return;
+            }
+            
+            const input = document.getElementById('naturalInput').value.trim();
+            if (!input) {
+                showStatusMessage('翻訳する文章を入力してくれ', 'warning');
+                return;
+            }
+            
+            const direction = document.querySelector('input[name="naturalDirection"]:checked').value;
+            const translation = translator.translateSentenceNatural(input, direction);
+            
+            document.getElementById('naturalOutput').value = translation.result;
+            
+            if (translation.parseInfo) {
+                document.getElementById('parseResult').textContent = translation.parseInfo;
+            }
+            
+            showStatusMessage('自然翻訳完了だ！', 'success');
+        }
+
+        function addNewWord() {
+            const japanese = document.getElementById('newWordJp').value.trim();
+            const buil = document.getElementById('newWordBuil').value.trim();
+            const category = document.getElementById('newWordCategory').value;
+            
+            if (!japanese || !buil) {
+                showStatusMessage('日本語とBuil語の両方を入力してくれ', 'warning');
+                return;
+            }
+            
+            translator.addWord(japanese, buil, category);
+            
+            // 入力フィールドをクリア
+            document.getElementById('newWordJp').value = '';
+            document.getElementById('newWordBuil').value = '';
+            
+            showStatusMessage(`単語を追加したぞ: ${japanese} → ${buil}`, 'success');
+        }
+
+        function showVocabulary() {
+            if (!translator || Object.keys(translator.jpToBuil).length === 0) {
+                showStatusMessage('語彙データを読み込んでくれ', 'warning');
+                return;
+            }
+            
+            const display = document.getElementById('vocabularyDisplay');
+            const categorized = translator.getVocabularyByCategory();
+            
+            let html = '';
+            for (const [categoryName, words] of Object.entries(categorized)) {
+                html += `<div class="vocabulary-category">`;
+                html += `<h4>${categoryName} (${Object.keys(words).length}語)</h4>`;
+                
+                for (const [jp, buil] of Object.entries(words)) {
+                    html += `<div class="word-entry">`;
+                    html += `<span>${jp}</span>`;
+                    html += `<span>${buil}</span>`;
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            }
+            
+            display.innerHTML = html;
+        }
+
+        function downloadVocabulary() {
+            if (!translator || Object.keys(translator.vocabularyData).length === 0) {
+                showStatusMessage('語彙データがないみたいだ', 'warning');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(translator.vocabularyData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'buil_vocabulary.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showStatusMessage('辞書ファイルをダウンロードしたぞ', 'success');
+        }
+
+        function loadDefaultVocabulary() {
+            if (translator.loadVocabulary(defaultVocabularyData)) {
+                showStatusMessage(`デフォルト語彙をリロードしたぞ: ${Object.keys(translator.jpToBuil).length}語`, 'success');
+            } else {
+                showStatusMessage('デフォルト語彙の読み込みに失敗したみたいだ', 'warning');
+            }
+        }
+
+        function loadVocabularyFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (translator.loadVocabulary(data)) {
+                        showStatusMessage(`外部語彙ファイルを読み込んだぞ: ${Object.keys(translator.jpToBuil).length}語`, 'success');
+                    } else {
+                        showStatusMessage('語彙ファイルの読み込みに失敗したみたいだ', 'warning');
+                    }
+                } catch (error) {
+                    showStatusMessage('ファイル形式が正しくないようだ', 'warning');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function searchVocabulary() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (!searchTerm) {
+                showStatusMessage('検索語を入力してくれ', 'warning');
+                return;
+            }
+            
+            if (!translator || Object.keys(translator.jpToBuil).length === 0) {
+                showStatusMessage('語彙データを読み込んでくれ', 'warning');
+                return;
+            }
+            
+            const results = translator.searchVocabulary(searchTerm);
+            const display = document.getElementById('searchResults');
+            
+            let html = '';
+            
+            if (results.exact.length > 0) {
+                html += '<h4>完全一致</h4>';
+                results.exact.forEach(result => {
+                    html += `<div class="search-result-item">${result}</div>`;
+                });
+            }
+            
+            if (results.partial.length > 0) {
+                html += '<h4>部分一致</h4>';
+                results.partial.forEach(match => {
+                    html += `<div class="search-result-item">${match}</div>`;
+                });
+            }
+            
+            if (results.exact.length === 0 && results.partial.length === 0) {
+                html = `<div class="search-result-item">「${searchTerm}」に関連する語彙が見つからなかったみたいだ</div>`;
+            }
+            
+            display.innerHTML = html;
+            display.style.display = 'block';
+        }
+
+        function showHistory() {
+            if (!translator || translator.translationHistory.length === 0) {
+                showStatusMessage('翻訳履歴がないみたいだな', 'info');
+                return;
+            }
+            
+            const display = document.getElementById('historyDisplay');
+            const recent = translator.translationHistory.slice(-10).reverse();
+            
+            let html = `<h3>最新の${recent.length}件を表示:</h3>`;
+            
+            recent.forEach((record, index) => {
+                const directionText = record.direction === "jp_to_buil" ? "日→B" : "B→日";
+                html += `<div class="history-item">`;
+                html += `<span class="direction-badge">${directionText}</span>`;
+                html += `<strong>${record.input}</strong> → ${record.output}`;
+                html += `<div style="font-size: 12px; color: #666; margin-top: 5px;">${record.timestamp}</div>`;
+                html += `</div>`;
+            });
+            
+            display.innerHTML = html;
+        }
+
+        function clearHistory() {
+            if (translator) {
+                translator.translationHistory = [];
+                document.getElementById('historyDisplay').innerHTML = '';
+                showStatusMessage('翻訳履歴をクリアしたぞ', 'success');
+            }
+        }
+    </script>
+</body>
+</html>
