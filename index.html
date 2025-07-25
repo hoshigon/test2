@@ -265,6 +265,9 @@
             background: #f8f9fa;
             border-radius: 10px;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .input-section h3, .output-section h3 {
@@ -282,6 +285,8 @@
             resize: vertical;
             font-family: inherit;
             transition: border-color 0.3s ease;
+            box-sizing: border-box;
+            flex: 1;
         }
 
         /* 入力エリアのレスポンシブ調整 */
@@ -649,7 +654,7 @@
 
         <div class="main-content">
             <div class="tab-container">
-                <button class="tab active" onclick="showTab('translate')">翻訳</button>
+                <button class="tab active" onclick="showTab('translate')">翻訳（デバック）</button>
                 <button class="tab" onclick="showTab('natural')">自然翻訳 おすすめ</button>
                 <button class="tab" onclick="showTab('words')">単語管理</button>
                 <button class="tab" onclick="showTab('search')">検索</button>
