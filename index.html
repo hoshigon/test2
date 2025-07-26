@@ -485,12 +485,30 @@
         .word-entry {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid #dee2e6;
         }
 
         .word-entry:last-child {
             border-bottom: none;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            min-height: 32px;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+            transform: scale(1.05);
         }
 
         .history-item {
@@ -674,41 +692,17 @@
 
         <div class="main-content">
             <div class="tab-container">
-                <button class="tab active" onclick="showTab('translate')">翻訳（デバック）</button>
-                <button class="tab" onclick="showTab('natural')">自然翻訳 おすすめ</button>
+                <button class="tab active" onclick="showTab('natural')">自然翻訳 おすすめだぞ！</button>
+                <button class="tab" onclick="showTab('translate')">翻訳（デバック用）</button>
                 <button class="tab" onclick="showTab('words')">単語管理</button>
                 <button class="tab" onclick="showTab('search')">検索</button>
                 <button class="tab" onclick="showTab('history')">履歴</button>
                 <button class="tab" onclick="showTab('info')">システム情報</button>
             </div>
 
-            <!-- 翻訳タブ -->
-            <div id="translate" class="tab-content active">
-                <h2>スペース区切り翻訳</h2>
-                <div class="translation-area">
-                    <div class="input-section">
-                        <h3>入力</h3>
-                        <textarea id="translateInput" placeholder="翻訳したい文章を入力してくれ..."></textarea>
-                        <div style="margin-top: 10px;">
-                            <label>
-                                <input type="radio" name="translateDirection" value="jp_to_buil" checked> 日本語 → Buil語
-                            </label>
-                            <label style="margin-left: 20px;">
-                                <input type="radio" name="translateDirection" value="buil_to_jp"> Buil語 → 日本語
-                            </label>
-                        </div>
-                    </div>
-                    <button class="translate-btn" onclick="translateText()">→</button>
-                    <div class="output-section">
-                        <h3>結果</h3>
-                        <textarea id="translateOutput" readonly placeholder="翻訳結果がここに表示されるぞ..."></textarea>
-                    </div>
-                </div>
-            </div>
-
             <!-- 自然翻訳タブ -->
-            <div id="natural" class="tab-content">
-                <h2>自然な翻訳 おすすめだ！</h2>
+            <div id="natural" class="tab-content active">
+                <h2>自然な翻訳</h2>
                 <div class="translation-area">
                     <div class="input-section">
                         <h3>入力</h3>
@@ -727,6 +721,30 @@
                     <div class="output-section">
                         <h3>結果</h3>
                         <textarea id="naturalOutput" readonly placeholder="自然な翻訳結果がここに表示されるぞ..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 翻訳タブ -->
+            <div id="translate" class="tab-content">
+                <h2>スペース区切り翻訳</h2>
+                <div class="translation-area">
+                    <div class="input-section">
+                        <h3>入力</h3>
+                        <textarea id="translateInput" placeholder="翻訳したい文章を入力してくれ..."></textarea>
+                        <div style="margin-top: 10px;">
+                            <label>
+                                <input type="radio" name="translateDirection" value="jp_to_buil" checked> 日本語 → Buil語
+                            </label>
+                            <label style="margin-left: 20px;">
+                                <input type="radio" name="translateDirection" value="buil_to_jp"> Buil語 → 日本語
+                            </label>
+                        </div>
+                    </div>
+                    <button class="translate-btn" onclick="translateText()">→</button>
+                    <div class="output-section">
+                        <h3>結果</h3>
+                        <textarea id="translateOutput" readonly placeholder="翻訳結果がここに表示されるぞ..."></textarea>
                     </div>
                 </div>
             </div>
@@ -846,7 +864,33 @@
     <script>
         // グローバル変数
         let translator = null;
-        let currentTab = 'translate';
+        let currentTab = 'natural';
+
+        // Buil語発音データ
+        const builReadings = {
+            "Fi": "フィ",
+            "Sol": "ソル", 
+            "Vek": "ヴェク",
+            "Fien": "フィエン",
+            "Solien": "ソリエン",
+            "Vekien": "ヴェキエン",
+            "ra": "ラ",
+            "ga": "ガ",
+            "zil": "ツィル",
+            "vo": "フォ",
+            "di": "ディ",
+            "te": "テ",
+            "Rüf": "ルフ",
+            "Sätyräji": "サティラジー",
+            "wenk": "ヴェンク",
+            "wenkt": "ヴェンクト",
+            "wenknix": "ヴェンクニクス",
+            "wenken": "ヴェンケン",
+            "Sein": "ザイン",
+            "ja": "ヤ",
+            "ren": "レン",
+            "buil": "ビル"
+        };
 
         // 正しいBuil語データ（JavaScript内に埋め込み）
         const defaultVocabularyData = {
@@ -1173,6 +1217,30 @@
                 console.log(`単語を追加したぞ: ${japanese} → ${buil} (${category})`);
             }
 
+            deleteWord(japanese) {
+                if (!(japanese in this.jpToBuil)) {
+                    return false;
+                }
+                
+                const buil = this.jpToBuil[japanese];
+                
+                // 各カテゴリから削除
+                for (const [category, words] of Object.entries(this.vocabularyData)) {
+                    if (category !== "info" && words[japanese]) {
+                        delete words[japanese];
+                        break;
+                    }
+                }
+                
+                // メイン辞書から削除
+                delete this.jpToBuil[japanese];
+                delete this.builToJp[buil];
+                
+                this.updateVocabCount();
+                console.log(`単語を削除したぞ: ${japanese} → ${buil}`);
+                return true;
+            }
+
             searchVocabulary(searchTerm) {
                 const results = [];
                 const partialMatches = [];
@@ -1180,12 +1248,17 @@
                 
                 // 完全一致検索
                 if (searchTerm in this.jpToBuil) {
-                    results.push(`日本語「${searchTerm}」→ Buil語「${this.jpToBuil[searchTerm]}」`);
+                    const buil = this.jpToBuil[searchTerm];
+                    const reading = this.getReading(buil);
+                    const readingText = reading ? ` (${reading})` : '';
+                    results.push(`日本語「${searchTerm}」→ Buil語「${buil}${readingText}」`);
                 }
                 
                 for (const [builWord, jpWord] of Object.entries(this.builToJp)) {
                     if (searchTerm.toLowerCase() === builWord.toLowerCase()) {
-                        const resultText = `Buil語「${builWord}」→ 日本語「${jpWord}」`;
+                        const reading = this.getReading(builWord);
+                        const readingText = reading ? ` (${reading})` : '';
+                        const resultText = `Buil語「${builWord}${readingText}」→ 日本語「${jpWord}」`;
                         if (!results.includes(resultText)) {
                             results.push(resultText);
                         }
@@ -1195,12 +1268,16 @@
                 // 部分一致検索
                 for (const [jp, buil] of Object.entries(this.jpToBuil)) {
                     if (jp.includes(searchTerm)) {
-                        const matchText = `日本語「${jp}」→ Buil語「${buil}」`;
+                        const reading = this.getReading(buil);
+                        const readingText = reading ? ` (${reading})` : '';
+                        const matchText = `日本語「${jp}」→ Buil語「${buil}${readingText}」`;
                         if (!results.includes(matchText) && !partialMatches.includes(matchText)) {
                             partialMatches.push(matchText);
                         }
                     } else if (buil.toLowerCase().includes(searchLower)) {
-                        const matchText = `日本語「${jp}」→ Buil語「${buil}」`;
+                        const reading = this.getReading(buil);
+                        const readingText = reading ? ` (${reading})` : '';
+                        const matchText = `日本語「${jp}」→ Buil語「${buil}${readingText}」`;
                         if (!results.includes(matchText) && !partialMatches.includes(matchText)) {
                             partialMatches.push(matchText);
                         }
@@ -1223,6 +1300,10 @@
                 if (this.translationHistory.length > 50) {
                     this.translationHistory = this.translationHistory.slice(-50);
                 }
+            }
+
+            getReading(builWord) {
+                return builReadings[builWord] || '';
             }
 
             getVocabularyByCategory() {
@@ -1264,6 +1345,36 @@
             const result = translator.translateSentence(input, direction);
             document.getElementById('translateOutput').value = result;
             
+            // 日本語→Buil語の場合、発音を表示
+            if (direction === "jp_to_buil") {
+                const words = result.split(/\s+/);
+                const readings = words.map(word => {
+                    const cleanWord = word.replace(/^\[|\]$/g, '').replace(/:.*$/, '');
+                    const reading = translator.getReading(cleanWord);
+                    return reading ? `${cleanWord}(${reading})` : cleanWord;
+                });
+                const readingText = readings.join(' ');
+                
+                // 発音表示エリアを追加/更新
+                let readingDiv = document.getElementById('translateReading');
+                if (!readingDiv) {
+                    readingDiv = document.createElement('div');
+                    readingDiv.id = 'translateReading';
+                    readingDiv.style.marginTop = '10px';
+                    readingDiv.style.fontSize = '14px';
+                    readingDiv.style.color = '#666';
+                    readingDiv.style.fontStyle = 'italic';
+                    document.getElementById('translateOutput').parentNode.appendChild(readingDiv);
+                }
+                readingDiv.innerHTML = `<strong>発音:</strong> ${readingText}`;
+            } else {
+                // Buil語→日本語の場合は発音表示を削除
+                const readingDiv = document.getElementById('translateReading');
+                if (readingDiv) {
+                    readingDiv.remove();
+                }
+            }
+            
             showStatusMessage('翻訳完了だ！', 'success');
         }
 
@@ -1288,6 +1399,36 @@
                 document.getElementById('parseResult').textContent = translation.parseInfo;
             }
             
+            // 日本語→Buil語の場合、発音を表示
+            if (direction === "jp_to_buil") {
+                const words = translation.result.split(/\s+/);
+                const readings = words.map(word => {
+                    const cleanWord = word.replace(/^\[|\]$/g, '').replace(/:.*$/, '');
+                    const reading = translator.getReading(cleanWord);
+                    return reading ? `${cleanWord}(${reading})` : cleanWord;
+                });
+                const readingText = readings.join(' ');
+                
+                // 発音表示エリアを追加/更新
+                let readingDiv = document.getElementById('naturalReading');
+                if (!readingDiv) {
+                    readingDiv = document.createElement('div');
+                    readingDiv.id = 'naturalReading';
+                    readingDiv.style.marginTop = '10px';
+                    readingDiv.style.fontSize = '14px';
+                    readingDiv.style.color = '#666';
+                    readingDiv.style.fontStyle = 'italic';
+                    document.getElementById('naturalOutput').parentNode.appendChild(readingDiv);
+                }
+                readingDiv.innerHTML = `<strong>発音:</strong> ${readingText}`;
+            } else {
+                // Buil語→日本語の場合は発音表示を削除
+                const readingDiv = document.getElementById('naturalReading');
+                if (readingDiv) {
+                    readingDiv.remove();
+                }
+            }
+            
             showStatusMessage('自然翻訳完了だ！', 'success');
         }
 
@@ -1301,13 +1442,49 @@
                 return;
             }
             
-            translator.addWord(japanese, buil, category);
+            // カテゴリ名を日本語で表示するための変換
+            const categoryNames = {
+                "pronouns": "人称代名詞",
+                "particles": "助詞",
+                "conjunction_particles": "接続助詞",
+                "nouns": "名詞",
+                "adjectives": "形容詞",
+                "verbs": "動詞",
+                "sentence_endings": "文末表現"
+            };
             
-            // 入力フィールドをクリア
-            document.getElementById('newWordJp').value = '';
-            document.getElementById('newWordBuil').value = '';
+            const categoryDisplayName = categoryNames[category] || category;
             
-            showStatusMessage(`単語を追加したぞ: ${japanese} → ${buil}`, 'success');
+            // 確認ダイアログを表示
+            const confirmMessage = `以下の単語を追加するか？\n\n` +
+                                 `日本語: ${japanese}\n` +
+                                 `Buil語: ${buil}\n` +
+                                 `カテゴリ: ${categoryDisplayName}`;
+            
+            if (confirm(confirmMessage)) {
+                // 既存の単語かチェック
+                if (translator.jpToBuil[japanese]) {
+                    const overwriteMessage = `「${japanese}」は既に登録されてるみたいだぞ。\n` +
+                                           `現在の値: ${translator.jpToBuil[japanese]}\n` +
+                                           `新しい値: ${buil}\n\n` +
+                                           `上書きするか？`;
+                    
+                    if (!confirm(overwriteMessage)) {
+                        showStatusMessage('単語の追加をキャンセルしたぞ', 'info');
+                        return;
+                    }
+                }
+                
+                translator.addWord(japanese, buil, category);
+                
+                // 入力フィールドをクリア
+                document.getElementById('newWordJp').value = '';
+                document.getElementById('newWordBuil').value = '';
+                
+                showStatusMessage(`単語を追加したぞ: ${japanese} → ${buil}`, 'success');
+            } else {
+                showStatusMessage('単語の追加をキャンセルしたぞ', 'info');
+            }
         }
 
         function showVocabulary() {
@@ -1325,9 +1502,11 @@
                 html += `<h4>${categoryName} (${Object.keys(words).length}語)</h4>`;
                 
                 for (const [jp, buil] of Object.entries(words)) {
+                    const reading = translator.getReading(buil);
+                    const readingText = reading ? ` (${reading})` : '';
                     html += `<div class="word-entry">`;
-                    html += `<span>${jp}</span>`;
-                    html += `<span>${buil}</span>`;
+                    html += `<span>${jp} → ${buil}${readingText}</span>`;
+                    html += `<button class="btn-delete" onclick="deleteWord('${jp.replace(/'/g, "\\'")}')">削除</button>`;
                     html += `</div>`;
                 }
                 
@@ -1451,6 +1630,33 @@
                 translator.translationHistory = [];
                 document.getElementById('historyDisplay').innerHTML = '';
                 showStatusMessage('翻訳履歴をクリアしたぞ', 'success');
+            }
+        }
+
+        function deleteWord(japanese) {
+            if (!translator || !(japanese in translator.jpToBuil)) {
+                showStatusMessage('削除する単語が見つからないみたいだ', 'warning');
+                return;
+            }
+            
+            const buil = translator.jpToBuil[japanese];
+            
+            // 確認ダイアログを表示
+            const confirmMessage = `以下の単語を削除するか？\n\n` +
+                                 `日本語: ${japanese}\n` +
+                                 `Buil語: ${buil}\n\n` +
+                                 `※この操作は取り消せないぞ`;
+            
+            if (confirm(confirmMessage)) {
+                if (translator.deleteWord(japanese)) {
+                    showStatusMessage(`単語を削除したぞ: ${japanese} → ${buil}`, 'success');
+                    // 語彙表示を更新
+                    showVocabulary();
+                } else {
+                    showStatusMessage('単語の削除に失敗したみたいだ', 'warning');
+                }
+            } else {
+                showStatusMessage('単語の削除をキャンセルしたぞ', 'info');
             }
         }
     </script>
