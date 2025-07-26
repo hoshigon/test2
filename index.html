@@ -215,7 +215,7 @@
             display: grid;
             grid-template-columns: 1fr 80px 1fr;
             gap: 20px;
-            align-items: start;
+            align-items: center;
             margin-bottom: 20px;
         }
 
@@ -236,13 +236,15 @@
                 grid-template-columns: 1fr;
                 gap: 18px;
                 text-align: center;
+                align-items: stretch;
             }
             .translate-btn {
                 width: 55px;
                 height: 55px;
                 font-size: 21px;
-                margin: 0 auto;
+                margin: 10px auto;
                 justify-self: center;
+                align-self: center;
             }
         }
         
@@ -251,13 +253,15 @@
                 grid-template-columns: 1fr;
                 gap: 12px;
                 text-align: center;
+                align-items: stretch;
             }
             .translate-btn {
                 width: 45px;
                 height: 45px;
                 font-size: 18px;
-                margin: 0 auto;
+                margin: 10px auto;
                 justify-self: center;
+                align-self: center;
             }
         }
 
@@ -339,7 +343,10 @@
             cursor: pointer;
             transition: all 0.3s ease;
             align-self: center;
-            margin-top: 40px;
+            justify-self: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .translate-btn:hover {
