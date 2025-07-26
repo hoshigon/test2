@@ -621,9 +621,29 @@
             }
         }
         
+        /* ラジオボタンのスタイル */
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+        
+        /* スマホでのラジオボタン調整 */
+        @media (max-width: 768px) {
+            input[type="radio"] {
+                width: 20px;
+                height: 20px;
+                margin-right: 10px;
+                -webkit-appearance: radio;
+                appearance: radio;
+            }
+        }
+
         /* タッチデバイス共通調整 */
         @media (max-width: 1199px) {
-            .tab, .btn, input, select, textarea {
+            .tab, .btn, input[type="text"], input[type="file"], select, textarea {
                 -webkit-appearance: none;
                 appearance: none;
                 -webkit-tap-highlight-color: transparent;
